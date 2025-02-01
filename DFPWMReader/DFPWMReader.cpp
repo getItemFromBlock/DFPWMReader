@@ -246,21 +246,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
             return 1;
         }
         std::vector<std::filesystem::path> files;
-        if (argc <= 0)
+        
+        for (int i = 0; i < argc; i++)
         {
-            files.push_back(L"sounds/DebugSoundFull.dfpwm");
-        }
-        else
-        {
-            for (int i = 0; i < argc; i++)
-            {
-                std::filesystem::path p = args[i];
-                std::string tmp = p.extension().string();
-                const std::string tmp2 = std::string(".dfpwm");
-                if (tmp.compare(0, tmp2.size(), tmp2) != 0)
-                    continue;
-                files.push_back(p);
-            }
+            std::filesystem::path p = args[i];
+            std::string tmp = p.extension().string();
+            const std::string tmp2 = std::string(".dfpwm");
+            if (tmp.compare(0, tmp2.size(), tmp2) != 0)
+                continue;
+            files.push_back(p);
         }
 
         int result = LoadStringW(hInstance, IDS_APP_TITLE, (LPWSTR)&szTitle, 0);
