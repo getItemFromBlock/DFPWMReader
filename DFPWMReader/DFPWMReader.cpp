@@ -558,7 +558,7 @@ void PaintWindow(HWND window)
         bool current = (current_song == i) && play.load();
         if (DrawButton(hdcMem, 35, 30 + i * 40, current ? 1 : 0))
         {
-            if (current)
+            if (current_song == i)
             {
                 TryPlay(window);
             }
@@ -881,8 +881,7 @@ void ProcessDroppedFiles(HWND window, WPARAM wParam)
 
 void LoadFiles(const std::vector<std::filesystem::path> files)
 {
-    bool wasPlay = play.load();
-    play.store(false); // make sure we are not reading playing any sound right now, adding sounds to list might cause vector to be reallocated
+    std::vector<std::string> loadedSounds;
     for (int i = 0; i < files.size(); i++)
     {
         std::string tmp = loadFile(files[i]);
@@ -893,12 +892,22 @@ void LoadFiles(const std::vector<std::filesystem::path> files)
             MessageBox(NULL, mess.c_str(), szTitle, MB_ICONWARNING);
             continue;
         }
+        loadedSounds.push_back(tmp);
         sounds.push_back(tmp);
         trackNames.push_back(FormatTrackName(files[i], sounds.size()));
     
         audio_samples.push_back((int)tmp.size() * 8);
         audio_durations.push_back(audio_samples.back() * 1.0 / audio_sample_rate);
     }
+    if (loadedSounds.empty())
+        return;
+
+    bool wasPlay = play.load();
+    play.store(false); // make sure we are not reading playing any sound right now, adding sounds to list might cause vector to be reallocated
+    sounds.insert(sounds.end(),
+        std::make_move_iterator(loadedSounds.begin()), 
+        std::make_move_iterator(loadedSounds.end())
+    );
     play.store(wasPlay);
 }
 
