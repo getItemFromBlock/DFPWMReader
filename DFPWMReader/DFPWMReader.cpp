@@ -265,6 +265,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
                 return 0;
 
             HWND existingApp = FindWindowW(0, szTitle);
+            if (!existingApp)
+            {
+                // Try a second time, the window was probably not created yet
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                existingApp = FindWindowW(0, szTitle);
+            }
             if (existingApp)
             {
                 SetForegroundWindow(existingApp);
@@ -882,6 +888,7 @@ void ProcessDroppedFiles(HWND window, WPARAM wParam)
 void LoadFiles(const std::vector<std::filesystem::path> files)
 {
     std::vector<std::string> loadedSounds;
+    std::vector<std::wstring> loadedNames;
     for (int i = 0; i < files.size(); i++)
     {
         std::string tmp = loadFile(files[i]);
@@ -893,8 +900,7 @@ void LoadFiles(const std::vector<std::filesystem::path> files)
             continue;
         }
         loadedSounds.push_back(tmp);
-        sounds.push_back(tmp);
-        trackNames.push_back(FormatTrackName(files[i], sounds.size()));
+        loadedNames.push_back(FormatTrackName(files[i], sounds.size()));
     
         audio_samples.push_back((int)tmp.size() * 8);
         audio_durations.push_back(audio_samples.back() * 1.0 / audio_sample_rate);
@@ -909,6 +915,10 @@ void LoadFiles(const std::vector<std::filesystem::path> files)
         std::make_move_iterator(loadedSounds.end())
     );
     play.store(wasPlay);
+    trackNames.insert(trackNames.end(),
+        std::make_move_iterator(loadedNames.begin()), 
+        std::make_move_iterator(loadedNames.end())
+    );
 }
 
 int getCharKind(wchar_t c)
